@@ -93,7 +93,7 @@ function dash(){
  return '<div class="kpis">'+k.map(x=>'<div class="kpi"><small>'+x[0]+'</small><b>'+x[1]+'</b></div>').join('')+'</div><div class="grid2"><div class="panel"><h3>'+t('bvs')+'</h3>'+bars+'</div><div class="panel"><h3>'+t('bys')+'</h3>'+st+'</div></div>';}
 function render(){
  document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
- $('#brand').textContent=t('brand');
+ $('#brand').textContent=t('brand');$('#mbrand').textContent=t('brand');$('#ml').textContent=t('lang');
  $('#nav').innerHTML=[['dash','▦'],['projects','◫'],['materials','▥'],['tasks','✓'],['expenses','﷼'],['subs','⚒'],['employees','☻'],['payroll','▤'],['invoices','▧'],['journal','▨'],['reports','▩']].map(([v,i])=>'<button data-v="'+v+'" class="'+(v===view?'on':'')+'"><span aria-hidden="true">'+i+'</span>'+t(v)+'</button>').join('');
  $('#bl').textContent='🌐 '+t('lang');$('#bt').textContent='◐ '+t('light');$('#br').textContent='↺ '+t('reset');
  const loc=lang==='ar'?'ar-SA':'en-GB',now=new Date();
@@ -105,7 +105,8 @@ function render(){
  else h+='<div class="tools"><input id="q" type="search" placeholder="'+t('search')+'" value="'+esc(q)+'"><button class="btn p" data-a="1">+ '+t('add')+'</button></div><div id="tb">'+table()+'</div>';
  $('#main').innerHTML=h;
  bindPay();
- const qi=$('#q');if(qi)qi.oninput=e=>{q=e.target.value;$('#tb').innerHTML=table()};}
+ const qi=$('#q');if(qi)qi.oninput=e=>{q=e.target.value;$('#tb').innerHTML=table();labelTables();};
+ labelTables();}
 function form(id){
  const s=S[view],r=id?D[view].find(x=>x.id==id):{};
  const lab=(f,v,pre)=>pre?t(pre+v):v;
@@ -127,8 +128,9 @@ function form(id){
  $('#cx').onclick=()=>$('#dlg').close();
  $('#dlg').showModal();}
 document.addEventListener('click',e=>{
+ if(e.target.id==='ov'){document.body.classList.remove('menu');return;}
  const b=e.target.closest('button');if(!b)return;
- if(b.dataset.v){view=b.dataset.v;q='';render();}
+ if(b.dataset.v){view=b.dataset.v;q='';document.body.classList.remove('menu');render();window.scrollTo(0,0);}
  else if(b.dataset.a)form();
  else if(b.dataset.ip){const i=D.invoices.find(x=>x.id==b.dataset.ip);i.status='paid';i.paidOn=today;save();render();}
  else if(b.dataset.gen){D.employees.forEach(e=>{if(!D.payroll.some(s=>s.month===pm&&s.emp===e.id))D.payroll.push(mkSlip(e,pm,D.cfg))});save();render();}
@@ -139,8 +141,9 @@ document.addEventListener('click',e=>{
  else if(b.dataset.r||b.dataset.u)qtyForm(D.materials.find(x=>x.id==(b.dataset.r||b.dataset.u)),b.dataset.r?'recv':'use');
  else if(b.dataset.e)form(b.dataset.e);
  else if(b.dataset.d)ask(t('confirm'),()=>{D[view]=D[view].filter(x=>x.id!=b.dataset.d);save();render();});
- else if(b.id==='bl'){lang=lang==='ar'?'en':'ar';sv('lang',lang);render();}
- else if(b.id==='bt'){const r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dk?'light':'dark';sv('theme',r.dataset.theme);}
+ else if(b.id==='mm')document.body.classList.toggle('menu');
+ else if(b.id==='bl'||b.id==='ml'){lang=lang==='ar'?'en':'ar';sv('lang',lang);render();}
+ else if(b.id==='bt'||b.id==='mt'){const r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=dk?'light':'dark';sv('theme',r.dataset.theme);}
  else if(b.id==='br')ask(t('confirmR'),()=>{D=seed();save();render();});
 });
 function ask(msg,cb){
@@ -202,5 +205,7 @@ function repView(){
   +H(t('rep2'))+T([t('vout'),t('vin'),t('vnet')],[[money(vo),money(vi),'<b>'+money(vo-vi)+'</b>']])
   +H(t('rep3'))+T([t('a0'),t('a1'),t('a2'),t('a3')],[ag.map(money)])
   +H(t('rep4'))+T([t('account'),t('debit'),t('credit')],tb);}
+function labelTables(){document.querySelectorAll('table').forEach(tb=>{const hs=[...tb.querySelectorAll('thead th')].map(x=>x.textContent);
+ tb.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>{td.dataset.l=hs[i]||'';if(hs[i]===t('actions'))td.classList.add('act');}));});}
 const th=ld('theme',null);if(th)document.documentElement.dataset.theme=th;
 render();
